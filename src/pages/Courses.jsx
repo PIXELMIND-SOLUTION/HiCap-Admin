@@ -26,8 +26,6 @@ const Courses = () => {
     image: null,
     logoImage: null,
     pdf: null,
-    featureImages: [],
-    reviewImages: [],
     toolsImagesFiles: []
   });
 
@@ -45,7 +43,7 @@ const Courses = () => {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('https://hicap-backend-4rat.onrender.com/api/courseController');
+      const response = await axios.get('https://hicap-backend-4rat.onrender.com/api/coursecontrollers');
       setCourses(response.data.data);
       setError('');
     } catch (err) {
@@ -207,6 +205,7 @@ const Courses = () => {
   // Create a new course
   const handleCreateCourse = async (e) => {
     e.preventDefault();
+    console.log('clicked');
     try {
       setLoading(true);
       const data = new FormData();
@@ -217,7 +216,7 @@ const Courses = () => {
           data.append(key, JSON.stringify(formData[key]));
         } else if (key === 'image' || key === 'logoImage' || key === 'pdf') {
           if (formData[key]) data.append(key, formData[key]);
-        } else if (key === 'featureImages' || key === 'reviewImages' || key === 'toolsImagesFiles') {
+        } else if (key === 'toolsImagesFiles') {
           formData[key].forEach(file => {
             data.append(key, file);
           });
@@ -231,6 +230,7 @@ const Courses = () => {
           'Content-Type': 'multipart/form-data'
         }
       });
+      console.log(response)
       
       setSuccess('Course created successfully!');
       setShowModal(false);
@@ -256,7 +256,7 @@ const Courses = () => {
           data.append(key, JSON.stringify(formData[key]));
         } else if (key === 'image' || key === 'logoImage' || key === 'pdf') {
           if (formData[key]) data.append(key, formData[key]);
-        } else if (key === 'featureImages' || key === 'reviewImages' || key === 'toolsImagesFiles') {
+        } else if (key === 'toolsImagesFiles') {
           formData[key].forEach(file => {
             data.append(key, file);
           });
@@ -331,8 +331,6 @@ const Courses = () => {
       image: null,
       logoImage: null,
       pdf: null,
-      featureImages: [],
-      reviewImages: [],
       toolsImagesFiles: []
     });
     setFaqInput({ question: '', answer: '' });
@@ -371,8 +369,6 @@ const Courses = () => {
       image: null,
       logoImage: null,
       pdf: null,
-      featureImages: [],
-      reviewImages: [],
       toolsImagesFiles: []
     });
     
@@ -930,18 +926,6 @@ const Courses = () => {
                       </div>
                     </div>
 
-                    <div className="mb-3">
-                      <label className="form-label">Additional Feature Images</label>
-                      <input
-                        type="file"
-                        className="form-control"
-                        name="featureImages"
-                        onChange={handleMultiFileChange}
-                        accept="image/*"
-                        multiple
-                      />
-                    </div>
-
                     {/* Reviews Section */}
                     <div className="mb-3">
                       <label className="form-label">Reviews</label>
@@ -1036,18 +1020,6 @@ const Courses = () => {
                           )}
                         </div>
                       </div>
-                    </div>
-
-                    <div className="mb-3">
-                      <label className="form-label">Additional Review Images</label>
-                      <input
-                        type="file"
-                        className="form-control"
-                        name="reviewImages"
-                        onChange={handleMultiFileChange}
-                        accept="image/*"
-                        multiple
-                      />
                     </div>
 
                     <div className="mb-3">
