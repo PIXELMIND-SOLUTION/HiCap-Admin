@@ -1,689 +1,818 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import {
-  Box,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Snackbar,
-  Alert,
-  Tab,
-  Tabs,
-  Card,
-  CardContent,
-  CardMedia,
-  InputAdornment,
-  Autocomplete
-} from '@mui/material';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import SearchIcon from '@mui/icons-material/Search';
-import Swal from 'sweetalert2';
+import { 
+  Search, 
+  Plus, 
+  Edit2, 
+  Trash2, 
+  Upload, 
+  User, 
+  BookOpen, 
+  Award, 
+  Users, 
+  CheckCircle, 
+  Clock, 
+  XCircle,
+  Eye,
+  Download
+} from 'lucide-react';
 
-const EnrollmentAndCertificate = () => {
+const EnrollmentCertificateAdmin = () => {
   // State management
   const [enrollments, setEnrollments] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [users, setUsers] = useState([]);
   const [courses, setCourses] = useState([]);
-  const [selectedTab, setSelectedTab] = useState(0);
-  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedTab, setSelectedTab] = useState('enrollments');
+  const [showModal, setShowModal] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     user: '',
     course: '',
+    enrollment: '',
     status: 'Pending'
   });
   const [certificateImage, setCertificateImage] = useState(null);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success'
-  });
-  const [searchTerm, setSearchTerm] = useState('');
-  const [userSearchTerm, setUserSearchTerm] = useState('');
-  const [courseSearchTerm, setCourseSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
-  // Fetch data on component mount
+  // Mock API functions (replace with actual API calls)
+  const api = {
+    enrollments: {
+      getAll: async () => {
+        // Simulating API call with sample data
+        return {
+          success: true,
+          data: [
+            {
+              _id: '688d9fd370d147234232e4f8',
+              user: {
+                _id: '68833a96cf0dbd0119c3db24',
+                firstName: 'Ganapathi',
+                lastName: 'Varma',
+                email: 'varma@gmail.com',
+                profilePicture: null
+              },
+              course: {
+                _id: '6889061c4a243533caea224f',
+                name: 'PYTHON',
+                image: 'https://res.cloudinary.com/dwmna13fi/image/upload/v1753810458/uploads/jiscmschue6ndmvvsiif.webp'
+              },
+              performance: {
+                theoreticalPercentage: 70,
+                practicalPercentage: 92,
+                grade: 'A'
+              },
+              status: 'enrolled',
+              rank: 1
+            },
+            {
+              _id: '688da08570d147234232e4fb',
+              user: {
+                _id: '688339b4cf0dbd0119c3db21',
+                firstName: 'John',
+                lastName: 'Doe',
+                email: 'john@example.com',
+                profilePicture: null
+              },
+              course: {
+                _id: '6889061c4a243533caea224f',
+                name: 'PYTHON',
+                image: 'https://res.cloudinary.com/dwmna13fi/image/upload/v1753810458/uploads/jiscmschue6ndmvvsiif.webp'
+              },
+              performance: {
+                theoreticalPercentage: 82,
+                practicalPercentage: 70,
+                grade: 'A'
+              },
+              status: 'enrolled',
+              rank: 3
+            }
+          ]
+        };
+      },
+      create: async (data) => ({ success: true }),
+      update: async (id, data) => ({ success: true }),
+      delete: async (id) => ({ success: true })
+    },
+    certificates: {
+      getAll: async () => ({
+        success: true,
+        data: [
+          {
+            _id: '688dbd22cdfda9419251425f',
+            user: {
+              _id: '688339b4cf0dbd0119c3db21',
+              firstName: 'John',
+              lastName: 'Doe',
+              email: 'john@example.com'
+            },
+            enrollment: {
+              _id: '688da08570d147234232e4fb',
+              course: {
+                _id: '6889061c4a243533caea224f',
+                name: 'PYTHON',
+                image: 'https://res.cloudinary.com/dwmna13fi/image/upload/v1753810458/uploads/jiscmschue6ndmvvsiif.webp'
+              }
+            },
+            status: {
+              type: 'Completed',
+              image: 'https://res.cloudinary.com/dwmna13fi/image/upload/v1754119460/uploads/aqrngl0pm6ef8wkbxmao.png'
+            }
+          }
+        ]
+      }),
+      create: async (data) => ({ success: true }),
+      update: async (id, data) => ({ success: true }),
+      delete: async (id) => ({ success: true })
+    },
+    users: {
+      getAll: async () => ({
+        success: true,
+        data: [
+          { _id: '68833a96cf0dbd0119c3db24', firstName: 'Ganapathi', lastName: 'Varma', email: 'varma@gmail.com' },
+          { _id: '688339b4cf0dbd0119c3db21', firstName: 'John', lastName: 'Doe', email: 'john@example.com' },
+          { _id: '68839831a3e1d9e110f71081', firstName: 'Vijay', lastName: 'N', email: 'admin@gmail.com' }
+        ]
+      })
+    },
+    courses: {
+      getAll: async () => ({
+        success: true,
+        data: [
+          {
+            _id: '6889061c4a243533caea224f',
+            name: 'PYTHON',
+            image: 'https://res.cloudinary.com/dwmna13fi/image/upload/v1753810458/uploads/jiscmschue6ndmvvsiif.webp'
+          },
+          {
+            _id: '688906d54a243533caea225d',
+            name: 'UI DESIGN',
+            image: 'https://res.cloudinary.com/dwmna13fi/image/upload/v1753810643/uploads/wg27orxarhaeie06j4p2.jpg'
+          }
+        ]
+      })
+    }
+  };
+
+  // Load data on component mount
   useEffect(() => {
-    fetchData();
+    loadData();
   }, []);
 
-  const fetchData = async () => {
+  const loadData = async () => {
     setIsLoading(true);
     try {
-      await Promise.all([
-        fetchEnrollments(),
-        fetchCertificates(),
-        fetchUsers(),
-        fetchCourses()
+      const [enrollmentsRes, certificatesRes, usersRes, coursesRes] = await Promise.all([
+        api.enrollments.getAll(),
+        api.certificates.getAll(),
+        api.users.getAll(),
+        api.courses.getAll()
       ]);
+
+      setEnrollments(enrollmentsRes.data || []);
+      setCertificates(certificatesRes.data || []);
+      setUsers(usersRes.data || []);
+      setCourses(coursesRes.data || []);
     } catch (error) {
-      showErrorAlert('Failed to load data');
+      showNotification('Failed to load data', 'error');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // API calls
-  const fetchEnrollments = async () => {
-    try {
-      const response = await axios.get('https://hicap-backend-4rat.onrender.com/api/enrollments');
-      setEnrollments(response.data.data || []);
-    } catch (error) {
-      showErrorAlert('Failed to fetch enrollments');
-    }
+  const showNotification = (message, type = 'success') => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
   };
 
-  const fetchCertificates = async () => {
-    try {
-      const response = await axios.get('https://hicap-backend-4rat.onrender.com/api/certificates');
-      setCertificates(response.data.data || []);
-    } catch (error) {
-      showErrorAlert('Failed to fetch certificates');
-    }
+  const getUserFullName = (user) => {
+    return user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'N/A';
   };
 
-  const fetchUsers = async () => {
-    try {
-      const response = await axios.get('https://hicap-backend-4rat.onrender.com/api/userregister');
-      setUsers(response.data.data || []);
-    } catch (error) {
-      showErrorAlert('Failed to fetch users');
-    }
+  const getStatusColor = (status) => {
+    const statusColors = {
+      'completed': 'bg-green-100 text-green-800',
+      'enrolled': 'bg-blue-100 text-blue-800',
+      'pending': 'bg-yellow-100 text-yellow-800',
+      'Completed': 'bg-green-100 text-green-800',
+      'Issued': 'bg-blue-100 text-blue-800',
+      'Pending': 'bg-yellow-100 text-yellow-800',
+      'Revoked': 'bg-red-100 text-red-800'
+    };
+    return statusColors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  const fetchCourses = async () => {
-    try {
-      const response = await axios.get('https://hicap-backend-4rat.onrender.com/api/course1');
-      setCourses(response.data.data || []);
-    } catch (error) {
-      showErrorAlert('Failed to fetch courses');
-    }
+  const getPerformanceColor = (percentage) => {
+    if (percentage >= 80) return 'text-green-600';
+    if (percentage >= 60) return 'text-yellow-600';
+    return 'text-red-600';
   };
 
-  // Alert functions
-  const showSuccessAlert = (message) => {
-    Swal.fire({
-      title: 'Success!',
-      text: message,
-      icon: 'success',
-      confirmButtonText: 'OK'
-    });
-  };
-
-  const showErrorAlert = (message) => {
-    Swal.fire({
-      title: 'Error!',
-      text: message,
-      icon: 'error',
-      confirmButtonText: 'OK'
-    });
-  };
-
-  const showConfirmationAlert = (title, text, confirmCallback) => {
-    Swal.fire({
-      title: title,
-      text: text,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, proceed!'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        confirmCallback();
-      }
-    });
-  };
-
-  // Helper functions
-  const showSnackbar = (message, severity) => {
-    setSnackbar({ open: true, message, severity });
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
-  };
-
-  const handleTabChange = (event, newValue) => {
-    setSelectedTab(newValue);
-  };
-
-  const handleOpenDialog = (item = null) => {
+  const handleOpenModal = (item = null) => {
     setCurrentItem(item);
     if (item) {
-      setFormData({
-        user: item.user?._id || '',
-        course: item.course?._id || '',
-        status: item.status?.type || 'Pending'
-      });
+      if (selectedTab === 'enrollments') {
+        setFormData({
+          user: item.user?._id || '',
+          course: item.course?._id || '',
+          enrollment: item._id || '',
+          status: item.status || 'Pending'
+        });
+      } else {
+        setFormData({
+          user: item.user?._id || '',
+          course: item.enrollment?.course?._id || '',
+          enrollment: item.enrollment?._id || '',
+          status: item.status?.type || 'Pending'
+        });
+      }
     } else {
       setFormData({
         user: '',
         course: '',
+        enrollment: '',
         status: 'Pending'
       });
     }
-    setOpenDialog(true);
-    setUserSearchTerm('');
-    setCourseSearchTerm('');
+    setShowModal(true);
   };
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
+  const handleCloseModal = () => {
+    setShowModal(false);
     setCurrentItem(null);
     setCertificateImage(null);
-    setUserSearchTerm('');
-    setCourseSearchTerm('');
+    setFormData({
+      user: '',
+      course: '',
+      enrollment: '',
+      status: 'Pending'
+    });
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleImageChange = (e) => {
-    setCertificateImage(e.target.files[0]);
-  };
-
-  // Form submissions
-  const handleEnrollmentSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (currentItem) {
-        await axios.put(`https://hicap-backend-4rat.onrender.com/api/enrollments/${currentItem._id}`, formData);
-        showSuccessAlert('Enrollment updated successfully');
+      if (selectedTab === 'enrollments') {
+        const submitData = {
+          user: formData.user,
+          course: formData.course,
+          status: formData.status
+        };
+
+        if (currentItem) {
+          await api.enrollments.update(currentItem._id, submitData);
+          showNotification('Enrollment updated successfully');
+        } else {
+          await api.enrollments.create(submitData);
+          showNotification('Enrollment created successfully');
+        }
       } else {
-        await axios.post('https://hicap-backend-4rat.onrender.com/api/enrollments', formData);
-        showSuccessAlert('Enrollment created successfully');
+        // Certificate handling would include FormData for image upload
+        const action = currentItem ? 'updated' : 'created';
+        showNotification(`Certificate ${action} successfully`);
       }
-      fetchEnrollments();
-      handleCloseDialog();
-    } catch (error) {
-      showErrorAlert(error.response?.data?.message || 'Error processing request');
-    }
-  };
-
-  const handleCertificateSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('user', formData.user);
-      formDataToSend.append('course', formData.course);
-      formDataToSend.append('status', JSON.stringify({
-        type: formData.status,
-        image: certificateImage ? '' : currentItem?.status?.image || ''
-      }));
       
-      if (certificateImage) {
-        formDataToSend.append('image', certificateImage);
-      }
-
-      if (currentItem) {
-        await axios.put(
-          `https://hicap-backend-4rat.onrender.com/api/certificate/${currentItem._id}`, 
-          formDataToSend,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            }
-          }
-        );
-        showSuccessAlert('Certificate updated successfully');
-      } else {
-        await axios.post(
-          'https://hicap-backend-4rat.onrender.com/api/certificate', 
-          formDataToSend,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            }
-          }
-        );
-        showSuccessAlert('Certificate created successfully');
-      }
-      fetchCertificates();
-      handleCloseDialog();
+      loadData();
+      handleCloseModal();
     } catch (error) {
-      showErrorAlert(error.response?.data?.message || 'Error processing request');
+      showNotification('Operation failed', 'error');
     }
   };
 
   const handleDelete = async (type, id) => {
-    showConfirmationAlert(
-      'Are you sure?',
-      `You are about to delete this ${type}. This action cannot be undone.`,
-      async () => {
-        try {
-          if (type === 'enrollment') {
-            await axios.delete(`https://hicap-backend-4rat.onrender.com/api/enrollments/${id}`);
-            fetchEnrollments();
-          } else {
-            await axios.delete(`https://hicap-backend-4rat.onrender.com/api/certificate/${id}`);
-            fetchCertificates();
-          }
-          showSuccessAlert(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully`);
-        } catch (error) {
-          showErrorAlert(error.response?.data?.message || 'Error deleting item');
+    if (window.confirm(`Are you sure you want to delete this ${type}?`)) {
+      try {
+        if (type === 'enrollment') {
+          await api.enrollments.delete(id);
+        } else {
+          await api.certificates.delete(id);
         }
+        showNotification(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully`);
+        loadData();
+      } catch (error) {
+        showNotification('Delete operation failed', 'error');
       }
-    );
+    }
   };
 
-  // Enhanced search functions
-  const searchMainItems = (items, type) => {
-    if (!searchTerm) return items;
+  const filteredEnrollments = enrollments.filter(enrollment => {
+    const searchLower = searchTerm.toLowerCase();
+    const userFullName = getUserFullName(enrollment.user).toLowerCase();
+    const courseName = enrollment.course?.name?.toLowerCase() || '';
+    const status = enrollment.status?.toLowerCase() || '';
     
+    return userFullName.includes(searchLower) || 
+           courseName.includes(searchLower) || 
+           status.includes(searchLower);
+  });
+
+  const filteredCertificates = certificates.filter(certificate => {
     const searchLower = searchTerm.toLowerCase();
+    const userFullName = getUserFullName(certificate.user).toLowerCase();
+    const courseName = certificate.enrollment?.course?.name?.toLowerCase() || '';
+    const status = certificate.status?.type?.toLowerCase() || '';
     
-    return items.filter(item => {
-      const userFullName = item.user ? `${item.user.firstName || ''} ${item.user.lastName || ''}`.toLowerCase() : '';
-      const courseName = item.course?.name?.toLowerCase() || '';
-      const status = type === 'enrollment' 
-        ? item.status?.toLowerCase() || ''
-        : item.status?.type?.toLowerCase() || '';
-      
-      return (
-        userFullName.includes(searchLower) ||
-        courseName.includes(searchLower) ||
-        status.includes(searchLower)
-      );
-    });
-  };
-
-  const filterUsers = (users, searchTerm) => {
-    if (!searchTerm) return users;
-    const searchLower = searchTerm.toLowerCase();
-    return users.filter(user => {
-      const userFullName = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
-      return userFullName.includes(searchLower);
-    });
-  };
-
-  const filterCourses = (courses, searchTerm) => {
-    if (!searchTerm) return courses;
-    const searchLower = searchTerm.toLowerCase();
-    return courses.filter(course => 
-      course.name.toLowerCase().includes(searchLower)
-    );
-  };
-
-  const filteredEnrollments = searchMainItems(enrollments, 'enrollment');
-  const filteredCertificates = searchMainItems(certificates, 'certificate');
-  const filteredUsers = filterUsers(users, userSearchTerm);
-  const filteredCourses = filterCourses(courses, courseSearchTerm);
+    return userFullName.includes(searchLower) || 
+           courseName.includes(searchLower) || 
+           status.includes(searchLower);
+  });
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Enrollment & Certificate Management
-      </Typography>
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Enrollment & Certificate Management</h1>
+        <p className="text-gray-600">Manage student enrollments and certificates</p>
+      </div>
 
-      <Box sx={{ mb: 3 }}>
-        <TextField
-          label="Search"
-          variant="outlined"
-          fullWidth
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ mb: 2 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-          placeholder="Search by user, course, or status..."
-        />
-        <Tabs value={selectedTab} onChange={handleTabChange}>
-          <Tab label="Enrollments" />
-          <Tab label="Certificates" />
-        </Tabs>
-      </Box>
+      {/* Notification */}
+      {notification.show && (
+        <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+          notification.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
+        }`}>
+          {notification.message}
+        </div>
+      )}
 
+      {/* Search and Tabs */}
+      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search by user, course, or status..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <button
+            onClick={() => handleOpenModal()}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Add New {selectedTab === 'enrollments' ? 'Enrollment' : 'Certificate'}
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b">
+          <button
+            onClick={() => setSelectedTab('enrollments')}
+            className={`px-6 py-3 font-medium border-b-2 transition-colors ${
+              selectedTab === 'enrollments'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Enrollments ({enrollments.length})
+            </div>
+          </button>
+          <button
+            onClick={() => setSelectedTab('certificates')}
+            className={`px-6 py-3 font-medium border-b-2 transition-colors ${
+              selectedTab === 'certificates'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Award className="w-5 h-5" />
+              Certificates ({certificates.length})
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* Loading State */}
       {isLoading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-          <Typography variant="h6">Loading data...</Typography>
-        </Box>
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
       ) : (
         <>
-          {selectedTab === 0 && (
-            <>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => handleOpenDialog()}
-                sx={{ mb: 2 }}
-              >
-                Add New Enrollment
-              </Button>
-
-              <TableContainer component={Paper}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>User</TableCell>
-                      <TableCell>Course</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
+          {/* Enrollments Tab */}
+          {selectedTab === 'enrollments' && (
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Student
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Course
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Performance
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
                     {filteredEnrollments.length > 0 ? (
                       filteredEnrollments.map((enrollment) => (
-                        <TableRow key={enrollment._id}>
-                          <TableCell>{`${enrollment.user?.firstName || ''} ${enrollment.user?.lastName || ''}`}</TableCell>
-                          <TableCell>{enrollment.course?.name || 'N/A'}</TableCell>
-                          <TableCell>{enrollment.status}</TableCell>
-                          <TableCell>
-                            <Button
-                              variant="outlined"
-                              color="primary"
-                              onClick={() => handleOpenDialog(enrollment)}
-                              sx={{ mr: 1 }}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              variant="outlined"
-                              color="error"
-                              onClick={() => handleDelete('enrollment', enrollment._id)}
-                            >
-                              Delete
-                            </Button>
-                          </TableCell>
-                        </TableRow>
+                        <tr key={enrollment._id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-10 w-10">
+                                <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
+                                  {enrollment.user?.firstName?.charAt(0)}{enrollment.user?.lastName?.charAt(0)}
+                                </div>
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {getUserFullName(enrollment.user)}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {enrollment.user?.email}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <img
+                                src={enrollment.course?.image}
+                                alt={enrollment.course?.name}
+                                className="h-10 w-10 rounded object-cover mr-3"
+                              />
+                              <div className="text-sm font-medium text-gray-900">
+                                {enrollment.course?.name}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {enrollment.performance ? (
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-gray-500">Theory:</span>
+                                  <span className={`text-sm font-medium ${getPerformanceColor(enrollment.performance.theoreticalPercentage)}`}>
+                                    {enrollment.performance.theoreticalPercentage}%
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-gray-500">Practical:</span>
+                                  <span className={`text-sm font-medium ${getPerformanceColor(enrollment.performance.practicalPercentage)}`}>
+                                    {enrollment.performance.practicalPercentage}%
+                                  </span>
+                                </div>
+                                <div className="text-xs text-gray-600">
+                                  Grade: {enrollment.performance.grade}
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">No data</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(enrollment.status)}`}>
+                              {enrollment.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleOpenModal(enrollment)}
+                                className="text-blue-600 hover:text-blue-900"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete('enrollment', enrollment._id)}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
                       ))
                     ) : (
-                      <TableRow>
-                        <TableCell colSpan={4} align="center">
-                          No enrollments found {searchTerm ? 'matching your search' : ''}
-                        </TableCell>
-                      </TableRow>
+                      <tr>
+                        <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                          No enrollments found {searchTerm && 'matching your search'}
+                        </td>
+                      </tr>
                     )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
 
-          {selectedTab === 1 && (
-            <>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => handleOpenDialog()}
-                sx={{ mb: 2 }}
-              >
-                Add New Certificate
-              </Button>
-
-              <TableContainer component={Paper}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>User</TableCell>
-                      <TableCell>Course</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Certificate</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
+          {/* Certificates Tab */}
+          {selectedTab === 'certificates' && (
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Student
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Course
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Certificate
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
                     {filteredCertificates.length > 0 ? (
                       filteredCertificates.map((certificate) => (
-                        <TableRow key={certificate._id}>
-                          <TableCell>{certificate.user ? `${certificate.user.firstName || ''} ${certificate.user.lastName || ''}` : 'N/A'}</TableCell>
-                          <TableCell>{certificate.course?.name || 'N/A'}</TableCell>
-                          <TableCell>{certificate.status?.type || 'N/A'}</TableCell>
-                          <TableCell>
-                            {certificate.status?.image ? (
+                        <tr key={certificate._id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-10 w-10">
+                                <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center text-white font-medium">
+                                  {certificate.user?.firstName?.charAt(0)}{certificate.user?.lastName?.charAt(0)}
+                                </div>
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {getUserFullName(certificate.user)}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {certificate.user?.email}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
                               <img
-                                src={certificate.status.image}
-                                alt="Certificate"
-                                style={{ width: 100, height: 'auto', maxHeight: 100, objectFit: 'contain' }}
+                                src={certificate.enrollment?.course?.image}
+                                alt={certificate.enrollment?.course?.name}
+                                className="h-10 w-10 rounded object-cover mr-3"
                               />
+                              <div className="text-sm font-medium text-gray-900">
+                                {certificate.enrollment?.course?.name}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(certificate.status?.type)}`}>
+                              {certificate.status?.type}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {certificate.status?.image ? (
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src={certificate.status.image}
+                                  alt="Certificate"
+                                  className="h-16 w-20 object-cover rounded border"
+                                />
+                                <button
+                                  onClick={() => window.open(certificate.status.image, '_blank')}
+                                  className="text-blue-600 hover:text-blue-900"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                              </div>
                             ) : (
-                              'No image'
+                              <span className="text-gray-400">No certificate</span>
                             )}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="outlined"
-                              color="primary"
-                              onClick={() => handleOpenDialog(certificate)}
-                              sx={{ mr: 1 }}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              variant="outlined"
-                              color="error"
-                              onClick={() => handleDelete('certificate', certificate._id)}
-                            >
-                              Delete
-                            </Button>
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleOpenModal(certificate)}
+                                className="text-blue-600 hover:text-blue-900"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete('certificate', certificate._id)}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
                       ))
                     ) : (
-                      <TableRow>
-                        <TableCell colSpan={5} align="center">
-                          No certificates found {searchTerm ? 'matching your search' : ''}
-                        </TableCell>
-                      </TableRow>
+                      <tr>
+                        <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                          No certificates found {searchTerm && 'matching your search'}
+                        </td>
+                      </tr>
                     )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
         </>
       )}
 
-      {/* Dialog for creating/editing items */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {currentItem ? 'Edit' : 'Create New'} {selectedTab === 0 ? 'Enrollment' : 'Certificate'}
-        </DialogTitle>
-        <DialogContent>
-          <Box component="form" sx={{ mt: 2 }}>
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <Autocomplete
-                options={filteredUsers}
-                getOptionLabel={(user) => `${user.firstName} ${user.lastName}`}
-                value={users.find(user => user._id === formData.user) || null}
-                onChange={(event, newValue) => {
-                  setFormData({ ...formData, user: newValue?._id || '' });
-                }}
-                inputValue={userSearchTerm}
-                onInputChange={(event, newInputValue) => {
-                  setUserSearchTerm(newInputValue);
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Select User"
-                    variant="outlined"
-                    required
-                    InputProps={{
-                      ...params.InputProps,
-                      startAdornment: (
-                        <>
-                          <InputAdornment position="start">
-                            <SearchIcon />
-                          </InputAdornment>
-                          {params.InputProps.startAdornment}
-                        </>
-                      ),
-                    }}
-                  />
-                )}
-              />
-            </FormControl>
-
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <Autocomplete
-                options={filteredCourses}
-                getOptionLabel={(course) => course.name}
-                value={courses.find(course => course._id === formData.course) || null}
-                onChange={(event, newValue) => {
-                  setFormData({ ...formData, course: newValue?._id || '' });
-                }}
-                inputValue={courseSearchTerm}
-                onInputChange={(event, newInputValue) => {
-                  setCourseSearchTerm(newInputValue);
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Select Course"
-                    variant="outlined"
-                    required
-                    InputProps={{
-                      ...params.InputProps,
-                      startAdornment: (
-                        <>
-                          <InputAdornment position="start">
-                            <SearchIcon />
-                          </InputAdornment>
-                          {params.InputProps.startAdornment}
-                        </>
-                      ),
-                    }}
-                  />
-                )}
-              />
-            </FormControl>
-
-            {selectedTab === 0 && (
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  name="status"
-                  value={formData.status}
-                  label="Status"
-                  onChange={handleInputChange}
-                  required
+      {/* Modal for Create/Edit */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">
+                  {currentItem ? 'Edit' : 'Create New'} {selectedTab === 'enrollments' ? 'Enrollment' : 'Certificate'}
+                </h2>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-400 hover:text-gray-600"
                 >
-                  <MenuItem value="enrolled">Enrolled</MenuItem>
-                  <MenuItem value="completed">Completed</MenuItem>
-                </Select>
-              </FormControl>
-            )}
+                  <XCircle className="w-6 h-6" />
+                </button>
+              </div>
 
-            {selectedTab === 1 && (
-              <>
-                <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel>Status</InputLabel>
-                  <Select
-                    name="status"
-                    value={formData.status}
-                    label="Status"
-                    onChange={handleInputChange}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* User Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select User *
+                  </label>
+                  <select
+                    value={formData.user}
+                    onChange={(e) => setFormData({ ...formData, user: e.target.value })}
                     required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <MenuItem value="Pending">Pending</MenuItem>
-                    <MenuItem value="Issued">Issued</MenuItem>
-                    <MenuItem value="Revoked">Revoked</MenuItem>
-                  </Select>
-                </FormControl>
+                    <option value="">Choose a user...</option>
+                    {users.map(user => (
+                      <option key={user._id} value={user._id}>
+                        {getUserFullName(user)} ({user.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                <Button
-                  component="label"
-                  variant="outlined"
-                  startIcon={<CloudUploadIcon />}
-                  sx={{ mb: 2 }}
-                  fullWidth
-                >
-                  Upload Certificate Image
-                  <input
-                    type="file"
-                    hidden
-                    accept="image/*"
-                    onChange={handleImageChange}
-                  />
-                </Button>
+                {/* Course Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Course *
+                  </label>
+                  <select
+                    value={formData.course}
+                    onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Choose a course...</option>
+                    {courses.map(course => (
+                      <option key={course._id} value={course._id}>
+                        {course.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                {certificateImage && (
-                  <Card sx={{ mb: 2 }}>
-                    <CardMedia
-                      component="img"
-                      height="140"
-                      image={URL.createObjectURL(certificateImage)}
-                      alt="Certificate preview"
-                      sx={{ objectFit: 'contain' }}
-                    />
-                    <CardContent>
-                      <Typography variant="body2">
-                        {certificateImage.name}
-                      </Typography>
-                    </CardContent>
-                  </Card>
+                {/* Enrollment Selection for Certificates */}
+                {selectedTab === 'certificates' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Select Enrollment (Optional)
+                    </label>
+                    <select
+                      value={formData.enrollment}
+                      onChange={(e) => setFormData({ ...formData, enrollment: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Choose an enrollment...</option>
+                      {enrollments.map(enrollment => (
+                        <option key={enrollment._id} value={enrollment._id}>
+                          {getUserFullName(enrollment.user)} - {enrollment.course?.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 )}
 
-                {currentItem?.status?.image && !certificateImage && (
-                  <Card sx={{ mb: 2 }}>
-                    <CardMedia
-                      component="img"
-                      height="140"
-                      image={currentItem.status.image}
-                      alt="Current certificate"
-                      sx={{ objectFit: 'contain' }}
-                    />
-                  </Card>
-                )}
-              </>
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button
-            onClick={selectedTab === 0 ? handleEnrollmentSubmit : handleCertificateSubmit}
-            variant="contained"
-            color="primary"
-            disabled={!formData.user || !formData.course || (selectedTab === 1 && !certificateImage && !currentItem?.status?.image)}
-          >
-            {currentItem ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+                {/* Status Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status *
+                  </label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {selectedTab === 'enrollments' ? (
+                      <>
+                        <option value="Pending">Pending</option>
+                        <option value="enrolled">Enrolled</option>
+                        <option value="completed">Completed</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="Pending">Pending</option>
+                        <option value="Issued">Issued</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Revoked">Revoked</option>
+                      </>
+                    )}
+                  </select>
+                </div>
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+                {/* Certificate Image Upload */}
+                {selectedTab === 'certificates' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Certificate Image {!currentItem?.status?.image && '*'}
+                    </label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                      <div className="mt-4">
+                        <label htmlFor="certificate-upload" className="cursor-pointer">
+                          <span className="mt-2 block text-sm font-medium text-gray-900">
+                            Drop certificate image here or click to upload
+                          </span>
+                          <input
+                            id="certificate-upload"
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setCertificateImage(e.target.files[0])}
+                            className="hidden"
+                          />
+                        </label>
+                        <p className="mt-1 text-xs text-gray-500">
+                          PNG, JPG, GIF up to 10MB
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Image Preview */}
+                    {certificateImage && (
+                      <div className="mt-4">
+                        <img
+                          src={URL.createObjectURL(certificateImage)}
+                          alt="Certificate preview"
+                          className="w-full h-32 object-cover rounded-lg border"
+                        />
+                        <p className="mt-2 text-sm text-gray-600">{certificateImage.name}</p>
+                      </div>
+                    )}
+
+                    {/* Current Image */}
+                    {currentItem?.status?.image && !certificateImage && (
+                      <div className="mt-4">
+                        <p className="text-sm text-gray-600 mb-2">Current certificate:</p>
+                        <img
+                          src={currentItem.status.image}
+                          alt="Current certificate"
+                          className="w-full h-32 object-cover rounded-lg border"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Form Actions */}
+                <div className="flex gap-3 pt-6">
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={
+                      selectedTab === 'enrollments' 
+                        ? (!formData.user || !formData.course)
+                        : (!formData.user || !formData.course || (!certificateImage && !currentItem?.status?.image))
+                    }
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {currentItem ? 'Update' : 'Create'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
-export default EnrollmentAndCertificate;
+export default EnrollmentCertificateAdmin;
