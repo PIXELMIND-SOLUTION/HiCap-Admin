@@ -11,7 +11,7 @@ const Classrooms = () => {
         image3: []
     });
     const [activeImageIndex, setActiveImageIndex] = useState(0);
-    const API_URL = 'https://hicap-backend-4rat.onrender.com/api/classRoom';
+    const API_URL = 'http://31.97.206.144:5001/api/classRoom';
 
     useEffect(() => {
         const fetchData = async () => {

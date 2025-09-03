@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
-const API_URL = "https://hicap-backend-4rat.onrender.com/api/faq";
+const API_URL = "http://31.97.206.144:5001/api/faq";
 
 const Faqs = () => {
   const [faqs, setFaqs] = useState([]);
@@ -84,7 +84,7 @@ const Faqs = () => {
       confirmButtonText: "Yes, delete it!",
     });
     if (confirm.isConfirmed) {
-      await axios.delete(`https://hicap-backend-4rat.onrender.com/api/${faq._id}`);
+      await axios.delete(`http://31.97.206.144:5001/api/${faq._id}`);
       Swal.fire("Deleted!", "FAQ has been deleted.", "success");
       fetchFaqs();
     }

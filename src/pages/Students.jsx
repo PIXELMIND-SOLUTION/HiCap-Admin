@@ -15,7 +15,7 @@ const Students = () => {
 
     const fetchUsers = async () => {
         try {
-            const res = await axios.get('https://hicap-backend-4rat.onrender.com/api/userregister');
+            const res = await axios.get('http://31.97.206.144:5001/api/userregister');
             setUsers(res.data.data);
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -24,7 +24,7 @@ const Students = () => {
     const fetchUserById = async (id) => {
         console.log(id)
         try {
-            const res = await axios.get(`https://hicap-backend-4rat.onrender.com/api/userregister/${id}`);
+            const res = await axios.get(`http://31.97.206.144:5001/api/userregister/${id}`);
             setSelectedUser(res.data.data);
             const modal = new window.bootstrap.Modal(document.getElementById('userModal'));
             modal.show();
@@ -54,7 +54,7 @@ const Students = () => {
 
     const handleUpdate = async () => {
         try {
-            await axios.put(`https://hicap-backend-4rat.onrender.com/api/userregister/${selectedUser._id}`, editForm);
+            await axios.put(`http://31.97.206.144:5001/api/userregister/${selectedUser._id}`, editForm);
             Swal.fire('Success', 'User updated successfully!', 'success');
             setSelectedUser(null);
             fetchUsers();
@@ -74,7 +74,7 @@ const Students = () => {
 
         if (confirm.isConfirmed) {
             try {
-                await axios.delete(`https://hicap-backend-4rat.onrender.com/api/userregister/${id}`);
+                await axios.delete(`http://31.97.206.144:5001/api/userregister/${id}`);
                 Swal.fire('Deleted!', 'User has been deleted.', 'success');
                 fetchUsers();
             } catch (error) {

@@ -13,7 +13,7 @@ const TechnicalTeam = () => {
     image2: null,
   });
 
-  const API_URL = 'https://hicap-backend-4rat.onrender.com/api/technical-team';
+  const API_URL = 'http://31.97.206.144:5001/api/technical-team';
 
   useEffect(() => {
     fetchData();

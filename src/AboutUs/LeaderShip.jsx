@@ -15,7 +15,7 @@ const Leadership = () => {
   const [editingIndex, setEditingIndex] = useState(null);
   const [docId, setDocId] = useState(null);
 
-  const API_URL = 'https://hicap-backend-4rat.onrender.com/api/leadership';
+  const API_URL = 'http://31.97.206.144:5001/api/leadership';
 
   useEffect(() => {
     const fetchData = async () => {
