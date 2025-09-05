@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
-const mentorAPI = "http://31.97.206.144:5001/api/our-mentor";
-const experienceAPI = "http://31.97.206.144:5001/api/our-mentor/experience";
+const mentorAPI = "https://backend-hicap.onrender.com/api/our-mentor";
+const experienceAPI = "https://backend-hicap.onrender.com/api/our-mentor/experience";
 
 const MentorsAndExperience = () => {
   const [mentors, setMentors] = useState([]);

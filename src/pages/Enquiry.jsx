@@ -10,7 +10,7 @@ const Enquiry = () => {
 
   const fetchEnquiries = async () => {
     try {
-      const res = await axios.get('http://31.97.206.144:5001/api/enquiries/all');
+      const res = await axios.get('https://backend-hicap.onrender.com/api/enquiries/all');
       setEnquiries(res.data);
     } catch (err) {
       console.error(err);
@@ -33,7 +33,7 @@ const Enquiry = () => {
 
     if (confirm.isConfirmed) {
       try {
-        await axios.delete(`http://31.97.206.144:5001/api/enquiries/${id}`);
+        await axios.delete(`https://backend-hicap.onrender.com/api/enquiries/${id}`);
         Swal.fire('Deleted!', 'Enquiry deleted successfully.', 'success');
         fetchEnquiries();
       } catch (err) {
@@ -44,7 +44,7 @@ const Enquiry = () => {
 
   const handleSave = async () => {
     try {
-      await axios.put(`http://31.97.206.144:5001/api/enquiries/${selected._id}`, selected);
+      await axios.put(`https://backend-hicap.onrender.com/api/enquiries/${selected._id}`, selected);
       Swal.fire('Success!', 'Enquiry updated successfully.', 'success');
       setShowModal(false);
       fetchEnquiries();

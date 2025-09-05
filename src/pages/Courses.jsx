@@ -40,7 +40,7 @@ const Courses = () => {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://31.97.206.144:5001/api/coursecontroller');
+      const response = await fetch('https://backend-hicap.onrender.com/api/coursecontroller');
       if (!response.ok) {
         throw new Error('Failed to fetch courses');
       }
@@ -56,7 +56,7 @@ const Courses = () => {
   const fetchCourseDetails = async (id) => {
     try {
       setLoading(true);
-      const response = await fetch(`http://31.97.206.144:5001/api/coursecontroller/${id}`);
+      const response = await fetch(`https://backend-hicap.onrender.com/api/coursecontroller/${id}`);
       if (!response.ok) {
         throw new Error('Failed to fetch course details');
       }
@@ -117,8 +117,8 @@ const Courses = () => {
       });
 
       const url = editingCourse
-        ? `http://31.97.206.144:5001/api/coursecontroller/${editingCourse._id}`
-        : 'http://31.97.206.144:5001/api/coursecontroller';
+        ? `https://backend-hicap.onrender.com/api/coursecontroller/${editingCourse._id}`
+        : 'https://backend-hicap.onrender.com/api/coursecontroller';
 
       const method = editingCourse ? 'PUT' : 'POST';
 
@@ -168,7 +168,7 @@ const Courses = () => {
     try {
       setLoading(true);
       // Fetch complete course details for editing
-      const response = await fetch(`http://31.97.206.144:5001/api/coursecontroller/${course._id}`);
+      const response = await fetch(`https://backend-hicap.onrender.com/api/coursecontroller/${course._id}`);
       if (!response.ok) {
         throw new Error('Failed to fetch course details');
       }
@@ -222,7 +222,7 @@ const Courses = () => {
     }
 
     try {
-      const response = await fetch(`http://31.97.206.144:5001/api/coursecontroller/${id}`, {
+      const response = await fetch(`https://backend-hicap.onrender.com/api/coursecontroller/${id}`, {
         method: 'DELETE',
       });
 

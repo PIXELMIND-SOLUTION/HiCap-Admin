@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
-const API = 'http://31.97.206.144:5001/api/liveclasses';
+const API = 'https://backend-hicap.onrender.com/api/liveclasses';
 
 const LiveClasses = () => {
   const [liveClasses, setLiveClasses] = useState([]);

@@ -4,10 +4,10 @@ import Swal from "sweetalert2";
 import { FaEye, FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import { Modal, Button, Form } from "react-bootstrap";
 
-const API_URL = "http://31.97.206.144:5001/api/course-modules";
-const ENROLLMENTS_API = "http://31.97.206.144:5001/api/enrollments";
-const COURSES_API = "http://31.97.206.144:5001/api/coursecontroller";
-const MENTORS_API = "http://31.97.206.144:5001/api/our-mentor/mentors";
+const API_URL = "https://backend-hicap.onrender.com/api/course-modules";
+const ENROLLMENTS_API = "https://backend-hicap.onrender.com/api/enrollments";
+const COURSES_API = "https://backend-hicap.onrender.com/api/coursecontroller";
+const MENTORS_API = "https://backend-hicap.onrender.com/api/our-mentor/mentors";
 
 const CourseModule = () => {
   const [modules, setModules] = useState([]);

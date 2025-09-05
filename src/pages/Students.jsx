@@ -21,7 +21,7 @@ const Students = () => {
     confirmpassword: '',
   });
 
-  const API_BASE = 'http://31.97.206.144:5001/api';
+  const API_BASE = 'https://backend-hicap.onrender.com/api';
 
   // Fetch all users
   const fetchUsers = async () => {

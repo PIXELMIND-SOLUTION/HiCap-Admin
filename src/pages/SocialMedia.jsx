@@ -3,7 +3,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const API_URL = 'http://31.97.206.144:5001/api/social-media';
+const API_URL = 'https://backend-hicap.onrender.com/api/social-media';
 
 const SocialMedia = () => {
   const [data, setData] = useState([]);

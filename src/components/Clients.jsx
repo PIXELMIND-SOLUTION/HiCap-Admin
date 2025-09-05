@@ -11,7 +11,7 @@ const Clients = () => {
 
   const fetchClients = async () => {
     try {
-      const res = await axios.get('http://31.97.206.144:5001/api/client');
+      const res = await axios.get('https://backend-hicap.onrender.com/api/client');
       setClients(res.data || []);
       console.log(res)
     } catch (err) {
@@ -39,10 +39,10 @@ const Clients = () => {
 
     try {
       if (editId) {
-        await axios.put(`http://31.97.206.144:5001/api/client/${editId}`, formData);
+        await axios.put(`https://backend-hicap.onrender.com/api/client/${editId}`, formData);
         Swal.fire('Updated!', 'Client updated successfully', 'success');
       } else {
-        await axios.post('http://31.97.206.144:5001/api/client', formData);
+        await axios.post('https://backend-hicap.onrender.com/api/client', formData);
         Swal.fire('Added!', 'Client added successfully', 'success');
       }
       setShowModal(false);
@@ -66,7 +66,7 @@ const Clients = () => {
 
     if (confirm.isConfirmed) {
       try {
-        await axios.delete(`http://31.97.206.144:5001/api/client/${id}`);
+        await axios.delete(`https://backend-hicap.onrender.com/api/client/${id}`);
         Swal.fire('Deleted!', 'Client deleted successfully.', 'success');
         fetchClients();
       } catch (err) {

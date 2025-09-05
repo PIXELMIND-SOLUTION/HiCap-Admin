@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Modal, Button, Table, Form } from 'react-bootstrap';
 import Swal from 'sweetalert2';
 
-const API_URL = 'http://31.97.206.144:5001/api/content';
+const API_URL = 'https://backend-hicap.onrender.com/api/content';
 
 const HomePopup = () => {
   const [popupData, setPopupData] = useState([]);

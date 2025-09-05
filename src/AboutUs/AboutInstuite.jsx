@@ -12,7 +12,7 @@ const AboutInstuite = () => {
     image1: null,
   });
 
-  const API_URL = 'http://31.97.206.144:5001/api/about';
+  const API_URL = 'https://backend-hicap.onrender.com/api/about';
 
   useEffect(() => {
     const fetchData = async () => {
