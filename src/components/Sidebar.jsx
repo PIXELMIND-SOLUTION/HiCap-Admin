@@ -18,6 +18,7 @@ import {
   FaUser,
   FaPlus,
   FaUserGraduate,
+  FaDatabase,
 } from 'react-icons/fa';
 import { BsChevronDown, BsChevronUp } from 'react-icons/bs';
 
@@ -37,7 +38,7 @@ const Sidebar = ({ isCollapsed, onToggleCollapse, isMobile }) => {
     { path: '/admin/courses', icon: <FaBook />, label: 'Courses' },
     { path: '/admin/live-classes', icon: <FaVideo />, label: 'Live Classes' },
     { path: '/admin/enrollandcertificate', icon: <FaUserGraduate />, label: 'Enrollment&Certificate' },
-    { path: '#', icon: <FaUserTie />, label: 'Interviews' },
+    { path: '/admin/module', icon: <FaDatabase />, label: 'Course Modules' },
     { path: '#', icon: <FaLayerGroup />, label: 'Batches' },
     { path: '#homepage', icon: <FaPlus />, label: 'Home Page',
       isDropdown: true,

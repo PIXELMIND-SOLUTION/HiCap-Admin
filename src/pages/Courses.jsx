@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import Sidebar from '../components/Sidebar';
+import TopNavbar from '../components/Navbar';
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);
@@ -25,9 +27,9 @@ const Courses = () => {
     faq: [{ question: '', answer: '' }],
     features: [{ title: '', image: null }],
     reviews: [{ name: '', rating: '', content: '', image: null }],
-    toolsImages: [null],
-    featureImages: [null],
-    reviewImages: [null]
+    toolsImages: [],
+    featureImages: [],
+    reviewImages: []
   });
   const coursesPerPage = 10;
 
@@ -99,16 +101,18 @@ const Courses = () => {
         content: r.content
       }))));
 
-      // Add multiple images
-      formData.featureImages.forEach((image, index) => {
-        if (image) formDataToSend.append('featureImages', image);
-      });
-
-      formData.toolsImages.forEach((image, index) => {
+      // Add multiple images - toolsImages
+      formData.toolsImages.forEach((image) => {
         if (image) formDataToSend.append('toolsImages', image);
       });
 
-      formData.reviewImages.forEach((image, index) => {
+      // Add multiple images - featureImages
+      formData.featureImages.forEach((image) => {
+        if (image) formDataToSend.append('featureImages', image);
+      });
+
+      // Add multiple images - reviewImages
+      formData.reviewImages.forEach((image) => {
         if (image) formDataToSend.append('reviewImages', image);
       });
 
@@ -154,9 +158,9 @@ const Courses = () => {
       faq: [{ question: '', answer: '' }],
       features: [{ title: '', image: null }],
       reviews: [{ name: '', rating: '', content: '', image: null }],
-      toolsImages: [null],
-      featureImages: [null],
-      reviewImages: [null]
+      toolsImages: [],
+      featureImages: [],
+      reviewImages: []
     });
   };
 
@@ -196,15 +200,9 @@ const Courses = () => {
             image: null
           }))
           : [{ name: '', rating: '', content: '', image: null }],
-        toolsImages: fullCourse.toolsImages && fullCourse.toolsImages.length > 0
-          ? new Array(fullCourse.toolsImages.length).fill(null)
-          : [null],
-        featureImages: fullCourse.featureImages && fullCourse.featureImages.length > 0
-          ? new Array(fullCourse.featureImages.length).fill(null)
-          : [null],
-        reviewImages: fullCourse.reviewImages && fullCourse.reviewImages.length > 0
-          ? new Array(fullCourse.reviewImages.length).fill(null)
-          : [null]
+        toolsImages: [],
+        featureImages: [],
+        reviewImages: []
       });
       setShowModal(true);
       setLoading(false);
@@ -247,20 +245,29 @@ const Courses = () => {
   };
 
   const handleFileChange = (e, field, index = null) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     if (index !== null) {
+      // Single file upload for specific index
       const newArray = [...formData[field]];
-      newArray[index] = file;
+      newArray[index] = files[0];
       setFormData(prev => ({
         ...prev,
         [field]: newArray
       }));
-    } else {
+    } else if (field === 'toolsImages' || field === 'featureImages' || field === 'reviewImages') {
+      // Multiple files upload for toolsImages, featureImages, and reviewImages
+      const newFiles = Array.from(files);
       setFormData(prev => ({
         ...prev,
-        [field]: file
+        [field]: [...prev[field], ...newFiles]
+      }));
+    } else {
+      // Single file upload
+      setFormData(prev => ({
+        ...prev,
+        [field]: files[0]
       }));
     }
   };
@@ -290,6 +297,15 @@ const Courses = () => {
     }));
   };
 
+  const removeFile = (field, index) => {
+    const newArray = [...formData[field]];
+    newArray.splice(index, 1);
+    setFormData(prev => ({
+      ...prev,
+      [field]: newArray
+    }));
+  };
+
   // Calculate pagination
   const indexOfLastCourse = currentPage * coursesPerPage;
   const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
@@ -298,104 +314,102 @@ const Courses = () => {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-
   const handleDownload = async (pdfUrl, fileName) => {
-  try {
-    // Fetch the PDF as a blob
-    const response = await fetch(pdfUrl, { method: "GET" });
-    if (!response.ok) throw new Error("Failed to fetch PDF");
+    try {
+      // Fetch the PDF as a blob
+      const response = await fetch(pdfUrl, { method: "GET" });
+      if (!response.ok) throw new Error("Failed to fetch PDF");
 
-    const arrayBuffer = await response.arrayBuffer(); // read as ArrayBuffer
-    const blob = new Blob([arrayBuffer], { type: "application/pdf" }); // force PDF type
-    const url = window.URL.createObjectURL(blob);
+      const arrayBuffer = await response.arrayBuffer(); // read as ArrayBuffer
+      const blob = new Blob([arrayBuffer], { type: "application/pdf" }); // force PDF type
+      const url = window.URL.createObjectURL(blob);
 
-    // Create a temporary link to download
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
+      // Create a temporary link to download
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
 
-    // Clean up
-    link.remove();
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error("PDF download error:", error);
-  }
-};
-
+      // Clean up
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("PDF download error:", error);
+    }
+  };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center text-blue-800">Course Management Admin Panel</h1>
+    <div className="container-fluid px-4 py-4">
+      <h1 className="text-center text-primary mb-4">Course Management Admin Panel</h1>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-          <span className="block sm:inline">{error}</span>
-          <button onClick={() => setError(null)} className="absolute top-0 right-0 px-4 py-3">
-            <span className="text-red-700">×</span>
-          </button>
+        <div className="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+          <span>{error}</span>
+          <button type="button" className="btn-close" onClick={() => setError(null)} aria-label="Close"></button>
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">All Courses ({courses.length})</h2>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="h4 fw-semibold">All Courses ({courses.length})</h2>
         <button
           onClick={() => {
             resetForm();
             setShowModal(true);
           }}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-md transition duration-300"
+          className="btn btn-primary"
         >
           Add New Course
         </button>
       </div>
 
-      <div className="overflow-x-auto shadow-md rounded-lg">
-        <table className="min-w-full bg-white border border-gray-200">
-          <thead className="bg-blue-100">
+      <div className="table-responsive shadow-sm rounded-3">
+        <table className="table table-striped table-hover">
+          <thead className="table-primary">
             <tr>
-              <th className="py-3 px-4 border-b text-left text-xs font-medium text-blue-800 uppercase tracking-wider">Name</th>
-              <th className="py-3 px-4 border-b text-left text-xs font-medium text-blue-800 uppercase tracking-wider">Category</th>
-              <th className="py-3 px-4 border-b text-left text-xs font-medium text-blue-800 uppercase tracking-wider">Duration</th>
-              <th className="py-3 px-4 border-b text-left text-xs font-medium text-blue-800 uppercase tracking-wider">Lessons</th>
-              <th className="py-3 px-4 border-b text-left text-xs font-medium text-blue-800 uppercase tracking-wider">Students</th>
-              <th className="py-3 px-4 border-b text-left text-xs font-medium text-blue-800 uppercase tracking-wider">Actions</th>
+              <th scope="col">Name</th>
+              <th scope="col">Category</th>
+              <th scope="col">Duration</th>
+              <th scope="col">Lessons</th>
+              <th scope="col">Students</th>
+              <th scope="col">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody>
             {currentCourses.map((course) => (
-              <tr key={course._id} className="hover:bg-blue-50 transition duration-200">
-                <td className="py-3 px-4 border-b font-medium text-gray-900">{course.name}</td>
-                <td className="py-3 px-4 border-b text-gray-700">{course.category}</td>
-                <td className="py-3 px-4 border-b text-gray-700">{course.duration}</td>
-                <td className="py-3 px-4 border-b text-gray-700">{course.noOfLessons || 'N/A'}</td>
-                <td className="py-3 px-4 border-b text-gray-700">{course.noOfStudents || 'N/A'}</td>
-                <td className="py-3 px-4 border-b">
-                  <div className="flex space-x-2">
+              <tr key={course._id}>
+                <td className="fw-semibold">{course.name}</td>
+                <td>{course.category}</td>
+                <td>{course.duration}</td>
+                <td>{course.noOfLessons || 'N/A'}</td>
+                <td>{course.noOfStudents || 'N/A'}</td>
+                <td>
+                  <div className="btn-group btn-group-sm">
                     <button
                       onClick={() => handleView(course)}
-                      className="bg-green-100 text-green-700 px-2 py-1 rounded text-sm hover:bg-green-200 transition duration-200"
+                      className="btn btn-outline-success"
                     >
                       View
                     </button>
                     <button
                       onClick={() => handleEdit(course)}
-                      className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-sm hover:bg-blue-200 transition duration-200"
+                      className="btn btn-outline-primary"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(course._id)}
-                      className="bg-red-100 text-red-700 px-2 py-1 rounded text-sm hover:bg-red-200 transition duration-200"
+                      className="btn btn-outline-danger"
                     >
                       Delete
                     </button>
@@ -408,297 +422,298 @@ const Courses = () => {
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-center mt-8">
-        <nav className="flex items-center space-x-2">
-          <button
-            onClick={() => paginate(currentPage > 1 ? currentPage - 1 : 1)}
-            disabled={currentPage === 1}
-            className={`px-3 py-1 rounded-md ${currentPage === 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-500 text-white hover:bg-blue-600 transition duration-200'}`}
-          >
-            Previous
-          </button>
+      <div className="d-flex justify-content-center mt-4">
+        <nav>
+          <ul className="pagination">
+            <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+              <button
+                className="page-link"
+                onClick={() => paginate(currentPage > 1 ? currentPage - 1 : 1)}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+            </li>
 
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button
-              key={page}
-              onClick={() => paginate(page)}
-              className={`px-3 py-1 rounded-md ${currentPage === page ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 transition duration-200'}`}
-            >
-              {page}
-            </button>
-          ))}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <li key={page} className={`page-item ${currentPage === page ? 'active' : ''}`}>
+                <button
+                  className="page-link"
+                  onClick={() => paginate(page)}
+                >
+                  {page}
+                </button>
+              </li>
+            ))}
 
-          <button
-            onClick={() => paginate(currentPage < totalPages ? currentPage + 1 : totalPages)}
-            disabled={currentPage === totalPages}
-            className={`px-3 py-1 rounded-md ${currentPage === totalPages ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-500 text-white hover:bg-blue-600 transition duration-200'}`}
-          >
-            Next
-          </button>
+            <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+              <button
+                className="page-link"
+                onClick={() => paginate(currentPage < totalPages ? currentPage + 1 : totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
+            </li>
+          </ul>
         </nav>
       </div>
 
-      <div className="mt-4 text-center text-gray-600">
+      <div className="text-center text-muted mt-3">
         Showing {indexOfFirstCourse + 1} to {Math.min(indexOfLastCourse, courses.length)} of {courses.length} courses
       </div>
 
       {/* Modal for Add/Edit Course */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-screen overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6 border-b pb-4">
-                <h2 className="text-3xl font-bold text-blue-800">
+        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-xl modal-dialog-scrollable">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title text-primary">
                   {editingCourse ? 'Edit Course' : 'Add New Course'}
-                </h2>
+                </h5>
                 <button
+                  type="button"
+                  className="btn-close"
                   onClick={() => setShowModal(false)}
-                  className="text-gray-400 hover:text-gray-600 transition duration-200"
-                >
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                </button>
+                ></button>
               </div>
+              <div className="modal-body">
+                <form onSubmit={handleSubmit}>
+                  <div className="row">
+                    <div className="col-md-6">
+                      <div className="mb-4">
+                        <h5 className="text-primary border-start border-4 border-primary ps-2 py-2 bg-light">Basic Information</h5>
 
-              <form onSubmit={handleSubmit} className="space-y-8">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="space-y-6">
-                    <h3 className="text-xl font-bold mb-4 text-blue-700 bg-blue-50 p-3 rounded-lg border-l-4 border-blue-400">Basic Information</h3>
-
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <label className="block text-gray-800 text-sm font-semibold mb-2" htmlFor="name">
-                          Course Name *
-                        </label>
-                        <input
-                          type="text"
-                          id="name"
-                          name="name"
-                          value={formData.name}
-                          onChange={handleChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          required
-                          placeholder="Enter course name"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-gray-800 text-sm font-semibold mb-2" htmlFor="description">
-                          Description *
-                        </label>
-                        <textarea
-                          id="description"
-                          name="description"
-                          value={formData.description}
-                          onChange={handleChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          rows="4"
-                          required
-                          placeholder="Enter course description"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-gray-800 text-sm font-semibold mb-2" htmlFor="mode">
-                            Mode
-                          </label>
-                          <select
-                            id="mode"
-                            name="mode"
-                            value={formData.mode}
-                            onChange={handleChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          >
-                            <option value="Online">Online</option>
-                            <option value="Offline">Offline</option>
-                            <option value="Hybrid">Hybrid</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-gray-800 text-sm font-semibold mb-2" htmlFor="category">
-                            Category
-                          </label>
-                          <select
-                            id="category"
-                            name="category"
-                            value={formData.category}
-                            onChange={handleChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          >
-                            <option value="Certified Programs">Certified Programs</option>
-                            <option value="Elite Courses">Elite Courses</option>
-                            <option value="Individual Courses">Individual Courses</option>
-                            <option value="Healthcare Courses">Healthcare Courses</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-gray-800 text-sm font-semibold mb-2" htmlFor="subcategory">
-                            Subcategory
+                        <div className="mb-3">
+                          <label htmlFor="name" className="form-label fw-semibold">
+                            Course Name *
                           </label>
                           <input
                             type="text"
-                            id="subcategory"
-                            name="subcategory"
-                            value={formData.subcategory}
+                            className="form-control"
+                            id="name"
+                            name="name"
+                            value={formData.name}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Enter subcategory"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-gray-800 text-sm font-semibold mb-2" htmlFor="duration">
-                            Duration *
-                          </label>
-                          <input
-                            type="text"
-                            id="duration"
-                            name="duration"
-                            value={formData.duration}
-                            onChange={handleChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             required
-                            placeholder="e.g., 3 months"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-gray-800 text-sm font-semibold mb-2" htmlFor="noOfLessons">
-                            Number of Lessons
-                          </label>
-                          <input
-                            type="text"
-                            id="noOfLessons"
-                            name="noOfLessons"
-                            value={formData.noOfLessons}
-                            onChange={handleChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="e.g., 20"
+                            placeholder="Enter course name"
                           />
                         </div>
 
-                        <div>
-                          <label className="block text-gray-800 text-sm font-semibold mb-2" htmlFor="noOfStudents">
-                            Number of Students
+                        <div className="mb-3">
+                          <label htmlFor="description" className="form-label fw-semibold">
+                            Description *
                           </label>
-                          <input
-                            type="text"
-                            id="noOfStudents"
-                            name="noOfStudents"
-                            value={formData.noOfStudents}
+                          <textarea
+                            className="form-control"
+                            id="description"
+                            name="description"
+                            value={formData.description}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="e.g., 500"
+                            rows="4"
+                            required
+                            placeholder="Enter course description"
                           />
+                        </div>
+
+                        <div className="row mb-3">
+                          <div className="col-md-6">
+                            <label htmlFor="mode" className="form-label fw-semibold">
+                              Mode
+                            </label>
+                            <select
+                              className="form-select"
+                              id="mode"
+                              name="mode"
+                              value={formData.mode}
+                              onChange={handleChange}
+                            >
+                              <option value="Online">Online</option>
+                              <option value="Offline">Offline</option>
+                              <option value="Hybrid">Hybrid</option>
+                            </select>
+                          </div>
+
+                          <div className="col-md-6">
+                            <label htmlFor="category" className="form-label fw-semibold">
+                              Category
+                            </label>
+                            <select
+                              className="form-select"
+                              id="category"
+                              name="category"
+                              value={formData.category}
+                              onChange={handleChange}
+                            >
+                              <option value="Certified Programs">Certified Programs</option>
+                              <option value="Elite Courses">Elite Courses</option>
+                              <option value="Individual Courses">Individual Courses</option>
+                              <option value="Healthcare Courses">Healthcare Courses</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="row mb-3">
+                          <div className="col-md-6">
+                            <label htmlFor="subcategory" className="form-label fw-semibold">
+                              Subcategory
+                            </label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              id="subcategory"
+                              name="subcategory"
+                              value={formData.subcategory}
+                              onChange={handleChange}
+                              placeholder="Enter subcategory"
+                            />
+                          </div>
+
+                          <div className="col-md-6">
+                            <label htmlFor="duration" className="form-label fw-semibold">
+                              Duration *
+                            </label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              id="duration"
+                              name="duration"
+                              value={formData.duration}
+                              onChange={handleChange}
+                              required
+                              placeholder="e.g., 3 months"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="row mb-3">
+                          <div className="col-md-6">
+                            <label htmlFor="noOfLessons" className="form-label fw-semibold">
+                              Number of Lessons
+                            </label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              id="noOfLessons"
+                              name="noOfLessons"
+                              value={formData.noOfLessons}
+                              onChange={handleChange}
+                              placeholder="e.g., 20"
+                            />
+                          </div>
+
+                          <div className="col-md-6">
+                            <label htmlFor="noOfStudents" className="form-label fw-semibold">
+                              Number of Students
+                            </label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              id="noOfStudents"
+                              name="noOfStudents"
+                              value={formData.noOfStudents}
+                              onChange={handleChange}
+                              placeholder="e.g., 500"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <h4 className="text-lg font-semibold text-gray-800 border-b pb-2">File Uploads</h4>
+                    <div className="col-md-6">
+                      <h5 className="text-primary border-start border-4 border-primary ps-2 py-2 bg-light">File Uploads</h5>
 
-                      <div>
-                        <label className="block text-gray-800 text-sm font-semibold mb-2">
+                      <div className="mb-3">
+                        <label className="form-label fw-semibold">
                           Main Image
                         </label>
                         <input
                           type="file"
+                          className="form-control"
                           onChange={(e) => handleFileChange(e, 'image')}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           accept="image/*"
                         />
                         {editingCourse && editingCourse.image && (
                           <div className="mt-2">
-                            <span className="text-sm text-gray-600">Current image:</span>
-                            <img src={editingCourse.image} alt="Current" className="mt-1 w-20 h-20 object-cover rounded border" />
+                            <span className="text-muted small">Current image:</span>
+                            <img src={editingCourse.image} alt="Current" className="mt-1 img-thumbnail" style={{ width: '80px', height: '80px' }} />
                           </div>
                         )}
                       </div>
 
-                      <div>
-                        <label className="block text-gray-800 text-sm font-semibold mb-2">
+                      <div className="mb-3">
+                        <label className="form-label fw-semibold">
                           Logo Image
                         </label>
                         <input
                           type="file"
+                          className="form-control"
                           onChange={(e) => handleFileChange(e, 'logoImage')}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           accept="image/*"
                         />
                         {editingCourse && editingCourse.logoImage && (
                           <div className="mt-2">
-                            <span className="text-sm text-gray-600">Current logo:</span>
-                            <img src={editingCourse.logoImage} alt="Current logo" className="mt-1 w-20 h-20 object-contain rounded border" />
+                            <span className="text-muted small">Current logo:</span>
+                            <img src={editingCourse.logoImage} alt="Current logo" className="mt-1 img-thumbnail" style={{ width: '80px', height: '80px' }} />
                           </div>
                         )}
                       </div>
 
-                      <div>
-                        <label className="block text-gray-800 text-sm font-semibold mb-2">
+                      <div className="mb-3">
+                        <label className="form-label fw-semibold">
                           PDF File
                         </label>
                         <input
                           type="file"
+                          className="form-control"
                           onChange={(e) => handleFileChange(e, 'pdf')}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           accept=".pdf"
                         />
                         {editingCourse && editingCourse.pdf && (
                           <div className="mt-2">
-                            <span className="text-sm text-gray-600">Current PDF: </span>
-                            <a href={editingCourse.pdf} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">View PDF</a>
+                            <span className="text-muted small">Current PDF: </span>
+                            <a href={editingCourse.pdf} target="_blank" rel="noopener noreferrer" className="text-primary text-decoration-none">View PDF</a>
                           </div>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-6">
-                    <h3 className="text-xl font-bold mb-4 text-green-700 bg-green-50 p-3 rounded-lg border-l-4 border-green-400">Content Sections</h3>
+                  <div className="mt-4">
+                    <h5 className="text-success border-start border-4 border-success ps-2 py-2 bg-light">Content Sections</h5>
 
-                    <div>
-                      <h4 className="text-lg font-semibold text-green-700 mb-3">FAQs</h4>
+                    <div className="mb-4">
+                      <h6 className="text-success mb-3">FAQs</h6>
                       {formData.faq.map((faq, index) => (
-                        <div key={index} className="mb-4 p-4 border border-green-200 rounded-lg bg-green-50">
-                          <div className="flex justify-between items-center mb-3">
-                            <h5 className="font-medium text-green-800">FAQ {index + 1}</h5>
+                        <div key={index} className="card mb-3 border-success">
+                          <div className="card-header bg-success bg-opacity-10 d-flex justify-content-between align-items-center">
+                            <span className="fw-medium text-success">FAQ {index + 1}</span>
                             {formData.faq.length > 1 && (
                               <button
                                 type="button"
+                                className="btn-close"
                                 onClick={() => removeArrayItem('faq', index)}
-                                className="text-red-500 hover:text-red-700 transition duration-200"
-                              >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                              </button>
+                              ></button>
                             )}
                           </div>
-                          <div className="space-y-3">
-                            <div>
-                              <label className="block text-gray-700 text-sm font-semibold mb-1">Question</label>
+                          <div className="card-body">
+                            <div className="mb-3">
+                              <label className="form-label fw-semibold">Question</label>
                               <input
                                 type="text"
+                                className="form-control"
                                 value={faq.question}
                                 onChange={(e) => handleArrayChange('faq', index, 'question', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                                 placeholder="Enter question"
                               />
                             </div>
                             <div>
-                              <label className="block text-gray-700 text-sm font-semibold mb-1">Answer</label>
+                              <label className="form-label fw-semibold">Answer</label>
                               <textarea
+                                className="form-control"
                                 value={faq.answer}
                                 onChange={(e) => handleArrayChange('faq', index, 'answer', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                                 rows="3"
                                 placeholder="Enter answer"
                               />
@@ -709,139 +724,134 @@ const Courses = () => {
                       <button
                         type="button"
                         onClick={() => addArrayItem('faq', { question: '', answer: '' })}
-                        className="mt-3 bg-green-100 text-green-700 px-4 py-2 rounded-md text-sm hover:bg-green-200 transition duration-200 font-medium"
+                        className="btn btn-outline-success btn-sm"
                       >
                         + Add FAQ
                       </button>
                     </div>
 
-                    <div>
-                      <h4 className="text-lg font-semibold text-purple-700 mb-3">Features</h4>
+                    <div className="mb-4">
+                      <h6 className="text-primary mb-3">Features</h6>
                       {formData.features.map((feature, index) => (
-                        <div key={index} className="mb-4 p-4 border border-purple-200 rounded-lg bg-purple-50">
-                          <div className="flex justify-between items-center mb-3">
-                            <h5 className="font-medium text-purple-800">Feature {index + 1}</h5>
+                        <div key={index} className="card mb-3 border-primary">
+                          <div className="card-header bg-primary bg-opacity-10 d-flex justify-content-between align-items-center">
+                            <span className="fw-medium text-primary">Feature {index + 1}</span>
                             {formData.features.length > 1 && (
                               <button
                                 type="button"
+                                className="btn-close"
                                 onClick={() => removeArrayItem('features', index)}
-                                className="text-red-500 hover:text-red-700 transition duration-200"
-                              >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                              </button>
+                              ></button>
                             )}
                           </div>
-                          <div>
-                            <label className="block text-gray-700 text-sm font-semibold mb-1">Title</label>
-                            <input
-                              type="text"
-                              value={feature.title}
-                              onChange={(e) => handleArrayChange('features', index, 'title', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                              placeholder="Enter feature title"
-                            />
+                          <div className="card-body">
+                            <div className="mb-3">
+                              <label className="form-label fw-semibold">Title</label>
+                              <input
+                                type="text"
+                                className="form-control"
+                                value={feature.title}
+                                onChange={(e) => handleArrayChange('features', index, 'title', e.target.value)}
+                                placeholder="Enter feature title"
+                              />
+                            </div>
                           </div>
                         </div>
                       ))}
                       <button
                         type="button"
                         onClick={() => addArrayItem('features', { title: '', image: null })}
-                        className="mt-3 bg-purple-100 text-purple-700 px-4 py-2 rounded-md text-sm hover:bg-purple-200 transition duration-200 font-medium"
+                        className="btn btn-outline-primary btn-sm"
                       >
                         + Add Feature
                       </button>
                     </div>
 
-                    <div>
-                      <h4 className="text-lg font-semibold text-yellow-700 mb-3">Feature Images</h4>
+                    <div className="mb-4">
+                      <h6 className="text-warning mb-3">Feature Images</h6>
                       {formData.featureImages.map((image, index) => (
-                        <div key={index} className="mb-4 p-4 border border-yellow-200 rounded-lg bg-yellow-50">
-                          <div className="flex justify-between items-center mb-3">
-                            <h5 className="font-medium text-yellow-800">Feature Image {index + 1}</h5>
-                            {formData.featureImages.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeArrayItem('featureImages', index)}
-                                className="text-red-500 hover:text-red-700 transition duration-200"
-                              >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                              </button>
+                        <div key={index} className="card mb-3 border-warning">
+                          <div className="card-header bg-warning bg-opacity-10 d-flex justify-content-between align-items-center">
+                            <span className="fw-medium text-warning">Feature Image {index + 1}</span>
+                            <button
+                              type="button"
+                              className="btn-close"
+                              onClick={() => removeFile('featureImages', index)}
+                            ></button>
+                          </div>
+                          <div className="card-body">
+                            <input
+                              type="file"
+                              className="form-control"
+                              onChange={(e) => handleFileChange(e, 'featureImages', index)}
+                              accept="image/*"
+                            />
+                            {image && (
+                              <div className="mt-2">
+                                <span className="text-muted small">Selected: {image.name}</span>
+                              </div>
+                            )}
+                            {editingCourse && editingCourse.featureImages && editingCourse.featureImages[index] && (
+                              <div className="mt-2">
+                                <span className="text-muted small">Current image:</span>
+                                <img src={editingCourse.featureImages[index]} alt="Current feature" className="mt-1 img-thumbnail" style={{ width: '64px', height: '64px' }} />
+                              </div>
                             )}
                           </div>
-                          <input
-                            type="file"
-                            onChange={(e) => handleFileChange(e, 'featureImages', index)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                            accept="image/*"
-                          />
-                          {editingCourse && editingCourse.featureImages && editingCourse.featureImages[index] && (
-                            <div className="mt-2">
-                              <span className="text-sm text-gray-600">Current image:</span>
-                              <img src={editingCourse.featureImages[index]} alt="Current feature" className="mt-1 w-16 h-16 object-cover rounded border" />
-                            </div>
-                          )}
                         </div>
                       ))}
                       <button
                         type="button"
                         onClick={() => addArrayItem('featureImages', null)}
-                        className="mt-3 bg-yellow-100 text-yellow-700 px-4 py-2 rounded-md text-sm hover:bg-yellow-200 transition duration-200 font-medium"
+                        className="btn btn-outline-warning btn-sm me-2"
                       >
                         + Add Feature Image
                       </button>
                     </div>
 
-                    <div>
-                      <h4 className="text-lg font-semibold text-red-700 mb-3">Reviews</h4>
+                    <div className="mb-4">
+                      <h6 className="text-danger mb-3">Reviews</h6>
                       {formData.reviews.map((review, index) => (
-                        <div key={index} className="mb-4 p-4 border border-red-200 rounded-lg bg-red-50">
-                          <div className="flex justify-between items-center mb-3">
-                            <h5 className="font-medium text-red-800">Review {index + 1}</h5>
+                        <div key={index} className="card mb-3 border-danger">
+                          <div className="card-header bg-danger bg-opacity-10 d-flex justify-content-between align-items-center">
+                            <span className="fw-medium text-danger">Review {index + 1}</span>
                             {formData.reviews.length > 1 && (
                               <button
                                 type="button"
+                                className="btn-close"
                                 onClick={() => removeArrayItem('reviews', index)}
-                                className="text-red-500 hover:text-red-700 transition duration-200"
-                              >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                              </button>
+                              ></button>
                             )}
                           </div>
-                          <div className="space-y-3">
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <label className="block text-gray-700 text-sm font-semibold mb-1">Name</label>
+                          <div className="card-body">
+                            <div className="row mb-3">
+                              <div className="col-md-6">
+                                <label className="form-label fw-semibold">Name</label>
                                 <input
                                   type="text"
+                                  className="form-control"
                                   value={review.name}
                                   onChange={(e) => handleArrayChange('reviews', index, 'name', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                                   placeholder="Reviewer name"
                                 />
                               </div>
-                              <div>
-                                <label className="block text-gray-700 text-sm font-semibold mb-1">Rating</label>
+                              <div className="col-md-6">
+                                <label className="form-label fw-semibold">Rating</label>
                                 <input
                                   type="text"
+                                  className="form-control"
                                   value={review.rating}
                                   onChange={(e) => handleArrayChange('reviews', index, 'rating', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                                   placeholder="e.g., 5"
                                 />
                               </div>
                             </div>
-                            <div>
-                              <label className="block text-gray-700 text-sm font-semibold mb-1">Content</label>
+                            <div className="mb-3">
+                              <label className="form-label fw-semibold">Content</label>
                               <textarea
+                                className="form-control"
                                 value={review.content}
                                 onChange={(e) => handleArrayChange('reviews', index, 'content', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                                 rows="3"
                                 placeholder="Review content"
                               />
@@ -852,123 +862,160 @@ const Courses = () => {
                       <button
                         type="button"
                         onClick={() => addArrayItem('reviews', { name: '', rating: '', content: '', image: null })}
-                        className="mt-3 bg-red-100 text-red-700 px-4 py-2 rounded-md text-sm hover:bg-red-200 transition duration-200 font-medium"
+                        className="btn btn-outline-danger btn-sm"
                       >
                         + Add Review
                       </button>
                     </div>
 
-                    <div>
-                      <h4 className="text-lg font-semibold text-indigo-700 mb-3">Review Images</h4>
+                    <div className="mb-4">
+                      <h6 className="text-info mb-3">Review Images</h6>
                       {formData.reviewImages.map((image, index) => (
-                        <div key={index} className="mb-4 p-4 border border-indigo-200 rounded-lg bg-indigo-50">
-                          <div className="flex justify-between items-center mb-3">
-                            <h5 className="font-medium text-indigo-800">Review Image {index + 1}</h5>
-                            {formData.reviewImages.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeArrayItem('reviewImages', index)}
-                                className="text-red-500 hover:text-red-700 transition duration-200"
-                              >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                              </button>
+                        <div key={index} className="card mb-3 border-info">
+                          <div className="card-header bg-info bg-opacity-10 d-flex justify-content-between align-items-center">
+                            <span className="fw-medium text-info">Review Image {index + 1}</span>
+                            <button
+                              type="button"
+                              className="btn-close"
+                              onClick={() => removeFile('reviewImages', index)}
+                            ></button>
+                          </div>
+                          <div className="card-body">
+                            <input
+                              type="file"
+                              className="form-control"
+                              onChange={(e) => handleFileChange(e, 'reviewImages', index)}
+                              accept="image/*"
+                            />
+                            {image && (
+                              <div className="mt-2">
+                                <span className="text-muted small">Selected: {image.name}</span>
+                              </div>
+                            )}
+                            {editingCourse && editingCourse.reviewImages && editingCourse.reviewImages[index] && (
+                              <div className="mt-2">
+                                <span className="text-muted small">Current image:</span>
+                                <img src={editingCourse.reviewImages[index]} alt="Current review" className="mt-1 img-thumbnail" style={{ width: '64px', height: '64px' }} />
+                              </div>
                             )}
                           </div>
-                          <input
-                            type="file"
-                            onChange={(e) => handleFileChange(e, 'reviewImages', index)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            accept="image/*"
-                          />
-                          {editingCourse && editingCourse.reviewImages && editingCourse.reviewImages[index] && (
-                            <div className="mt-2">
-                              <span className="text-sm text-gray-600">Current image:</span>
-                              <img src={editingCourse.reviewImages[index]} alt="Current review" className="mt-1 w-16 h-16 object-cover rounded border" />
-                            </div>
-                          )}
                         </div>
                       ))}
                       <button
                         type="button"
                         onClick={() => addArrayItem('reviewImages', null)}
-                        className="mt-3 bg-indigo-100 text-indigo-700 px-4 py-2 rounded-md text-sm hover:bg-indigo-200 transition duration-200 font-medium"
+                        className="btn btn-outline-info btn-sm me-2"
                       >
                         + Add Review Image
                       </button>
                     </div>
 
-                    <div>
-                      <h4 className="text-lg font-semibold text-pink-700 mb-3">Tools Images</h4>
-                      {formData.toolsImages.map((image, index) => (
-                        <div key={index} className="mb-4 p-4 border border-pink-200 rounded-lg bg-pink-50">
-                          <div className="flex justify-between items-center mb-3">
-                            <h5 className="font-medium text-pink-800">Tool Image {index + 1}</h5>
-                            {formData.toolsImages.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeArrayItem('toolsImages', index)}
-                                className="text-red-500 hover:text-red-700 transition duration-200"
-                              >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                              </button>
-                            )}
-                          </div>
+                    <div className="mb-4">
+                      <h6 className="text-purple mb-3">Tools Images</h6>
+                      <div className="card border-purple mb-3">
+                        <div className="card-header bg-purple bg-opacity-10">
+                          <span className="fw-medium text-purple">Upload Tools Images</span>
+                        </div>
+                        <div className="card-body">
                           <input
                             type="file"
-                            onChange={(e) => handleFileChange(e, 'toolsImages', index)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+                            className="form-control"
+                            onChange={(e) => handleFileChange(e, 'toolsImages')}
                             accept="image/*"
+                            multiple
                           />
-                          {editingCourse && editingCourse.toolsImages && editingCourse.toolsImages[index] && (
-                            <div className="mt-2">
-                              <span className="text-sm text-gray-600">Current image:</span>
-                              <img src={editingCourse.toolsImages[index]} alt="Current tool" className="mt-1 w-16 h-16 object-cover rounded border" />
-                            </div>
-                          )}
+                          <div className="form-text">You can select multiple images at once</div>
                         </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => addArrayItem('toolsImages', null)}
-                        className="mt-3 bg-pink-100 text-pink-700 px-4 py-2 rounded-md text-sm hover:bg-pink-200 transition duration-200 font-medium"
-                      >
-                        + Add Tool Image
-                      </button>
+                      </div>
+
+                      {formData.toolsImages.length > 0 && (
+                        <div className="card border-purple">
+                          <div className="card-header bg-purple bg-opacity-10">
+                            <span className="fw-medium text-purple">Selected Tools Images</span>
+                          </div>
+                          <div className="card-body">
+                            <div className="row">
+                              {formData.toolsImages.map((image, index) => (
+                                <div key={index} className="col-md-3 mb-3 position-relative">
+                                  <div className="card">
+                                    <div className="card-body p-2 text-center">
+                                      <span className="d-block text-truncate small mb-1">{image.name}</span>
+                                      <button
+                                        type="button"
+                                        className="btn-close position-absolute top-0 end-0 m-1"
+                                        onClick={() => removeFile('toolsImages', index)}
+                                      ></button>
+                                      {image.type.startsWith('image/') && (
+                                        <img
+                                          src={URL.createObjectURL(image)}
+                                          alt={`Preview ${index + 1}`}
+                                          className="img-fluid rounded"
+                                          style={{ maxHeight: '80px' }}
+                                        />
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {editingCourse && editingCourse.toolsImages && editingCourse.toolsImages.length > 0 && (
+                        <div className="card border-secondary mt-3">
+                          <div className="card-header bg-secondary bg-opacity-10">
+                            <span className="fw-medium">Current Tools Images</span>
+                          </div>
+                          <div className="card-body">
+                            <div className="row">
+                              {editingCourse.toolsImages.map((tool, index) => (
+                                <div key={index} className="col-md-2 mb-3">
+                                  <div className="card">
+                                    <img
+                                      src={tool}
+                                      alt={`Tool ${index + 1}`}
+                                      className="card-img-top p-2"
+                                      style={{ height: '80px', objectFit: 'contain' }}
+                                    />
+                                    <div className="card-footer p-1 text-center">
+                                      <small className="text-muted">Tool {index + 1}</small>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-
-                <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-200 font-medium"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 font-medium"
-                    disabled={uploading}
-                  >
-                    {uploading ? (
-                      <div className="flex items-center">
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Uploading...
-                      </div>
-                    ) : (
-                      `${editingCourse ? 'Update' : 'Create'} Course`
-                    )}
-                  </button>
-                </div>
-              </form>
+                </form>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  className="btn btn-primary"
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      Uploading...
+                    </>
+                  ) : (
+                    `${editingCourse ? 'Update' : 'Create'} Course`
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -976,197 +1023,209 @@ const Courses = () => {
 
       {/* Modal for View Course Details */}
       {showViewModal && viewingCourse && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-screen overflow-y-auto">
-            <div className="p-8">
-              <div className="flex justify-between items-center mb-6 border-b pb-4">
-                <h2 className="text-3xl font-bold text-blue-800">Course Details</h2>
+        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-xl modal-dialog-scrollable">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title text-primary">Course Details</h5>
                 <button
+                  type="button"
+                  className="btn-close"
                   onClick={() => setShowViewModal(false)}
-                  className="text-gray-400 hover:text-gray-600 transition duration-200"
-                >
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                </button>
+                ></button>
               </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="space-y-6">
-                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-6 border-l-4 border-blue-400">
-                    <h3 className="text-xl font-bold mb-4 text-blue-800">Basic Information</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-start">
-                        <span className="font-semibold text-gray-700 w-32 flex-shrink-0">Name:</span>
-                        <span className="text-gray-900 font-medium">{viewingCourse.name}</span>
+              <div className="modal-body">
+                <div className="row">
+                  <div className="col-md-6">
+                    <div className="card bg-primary bg-opacity-10 border-primary mb-4">
+                      <div className="card-header bg-primary text-white">
+                        <h6 className="mb-0">Basic Information</h6>
                       </div>
-                      <div className="flex items-start">
-                        <span className="font-semibold text-gray-700 w-32 flex-shrink-0">Description:</span>
-                        <span className="text-gray-900">{viewingCourse.description}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="font-semibold text-gray-700 w-32 flex-shrink-0">Mode:</span>
-                        <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">{viewingCourse.mode}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="font-semibold text-gray-700 w-32 flex-shrink-0">Category:</span>
-                        <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">{viewingCourse.category}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="font-semibold text-gray-700 w-32 flex-shrink-0">Subcategory:</span>
-                        <span className="text-gray-900">{viewingCourse.subcategory}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="font-semibold text-gray-700 w-32 flex-shrink-0">Duration:</span>
-                        <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">{viewingCourse.duration}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="font-semibold text-gray-700 w-32 flex-shrink-0">Lessons:</span>
-                        <span className="text-gray-900">{viewingCourse.noOfLessons || 'N/A'}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="font-semibold text-gray-700 w-32 flex-shrink-0">Students:</span>
-                        <span className="text-gray-900">{viewingCourse.noOfStudents || 'N/A'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-6 border-l-4 border-green-400">
-                    <h3 className="text-xl font-bold mb-4 text-green-800">Images</h3>
-                    <div className="space-y-4">
-                      {viewingCourse.image && (
-                        <div>
-                          <p className="font-semibold text-gray-700 mb-2">Main Image:</p>
-                          <img src={viewingCourse.image} alt="Course" className="w-full h-48 object-cover rounded-lg border shadow-md" />
+                      <div className="card-body">
+                        <div className="mb-3">
+                          <span className="fw-semibold text-muted">Name:</span>
+                          <span className="ms-2 fw-medium">{viewingCourse.name}</span>
                         </div>
-                      )}
-                      {viewingCourse.logoImage && (
-                        <div>
-                          <p className="font-semibold text-gray-700 mb-2">Logo Image:</p>
-                          <img src={viewingCourse.logoImage} alt="Course Logo" className="w-32 h-32 object-contain border rounded-lg shadow-md bg-white p-2" />
+                        <div className="mb-3">
+                          <span className="fw-semibold text-muted">Description:</span>
+                          <p className="ms-2">{viewingCourse.description}</p>
                         </div>
-                      )}
+                        <div className="mb-3">
+                          <span className="fw-semibold text-muted">Mode:</span>
+                          <span className="badge bg-primary ms-2">{viewingCourse.mode}</span>
+                        </div>
+                        <div className="mb-3">
+                          <span className="fw-semibold text-muted">Category:</span>
+                          <span className="badge bg-success ms-2">{viewingCourse.category}</span>
+                        </div>
+                        <div className="mb-3">
+                          <span className="fw-semibold text-muted">Subcategory:</span>
+                          <span className="ms-2">{viewingCourse.subcategory}</span>
+                        </div>
+                        <div className="mb-3">
+                          <span className="fw-semibold text-muted">Duration:</span>
+                          <span className="badge bg-warning text-dark ms-2">{viewingCourse.duration}</span>
+                        </div>
+                        <div className="mb-3">
+                          <span className="fw-semibold text-muted">Lessons:</span>
+                          <span className="ms-2">{viewingCourse.noOfLessons || 'N/A'}</span>
+                        </div>
+                        <div className="mb-3">
+                          <span className="fw-semibold text-muted">Students:</span>
+                          <span className="ms-2">{viewingCourse.noOfStudents || 'N/A'}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
 
-                  {viewingCourse.pdf && (
-                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-6 border-l-4 border-gray-400">
-                      <h3 className="text-xl font-bold mb-4 text-gray-800">Course Materials</h3>
-                      <button
-                        onClick={() => handleDownload(viewingCourse.pdf, viewingCourse.name)}
-                        className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200 font-medium"
-                      >
-                        <svg
-                          className="w-5 h-5 mr-2"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          ></path>
-                        </svg>
-                        Download Course PDF
-                      </button>
-
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-6">
-                  <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-6 border-l-4 border-purple-400">
-                    <h3 className="text-xl font-bold mb-4 text-purple-800">FAQs</h3>
-                    <div className="space-y-4 max-h-64 overflow-y-auto">
-                      {viewingCourse.faq && viewingCourse.faq.length > 0 ? (
-                        viewingCourse.faq.map((faq, index) => (
-                          <div key={index} className="bg-white p-4 rounded-lg border">
-                            <p className="font-semibold text-gray-800 mb-2">{faq.question}</p>
-                            <p className="text-gray-600 text-sm">{faq.answer}</p>
+                    <div className="card bg-success bg-opacity-10 border-success mb-4">
+                      <div className="card-header bg-success text-white">
+                        <h6 className="mb-0">Images</h6>
+                      </div>
+                      <div className="card-body">
+                        {viewingCourse.image && (
+                          <div className="mb-3">
+                            <p className="fw-semibold text-muted mb-2">Main Image:</p>
+                            <img src={viewingCourse.image} alt="Course" className="img-fluid rounded border shadow-sm" />
                           </div>
-                        ))
-                      ) : (
-                        <p className="text-gray-500 italic">No FAQs available</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg p-6 border-l-4 border-yellow-400">
-                    <h3 className="text-xl font-bold mb-4 text-yellow-800">Features</h3>
-                    <div className="space-y-3 max-h-64 overflow-y-auto">
-                      {viewingCourse.features && viewingCourse.features.length > 0 ? (
-                        viewingCourse.features.map((feature, index) => (
-                          <div key={index} className="bg-white p-3 rounded-lg border flex items-center">
-                            <div className="flex-1">
-                              <p className="font-medium text-gray-800">{feature.title}</p>
-                            </div>
-                            {feature.image && (
-                              <img src={feature.image} alt={feature.title} className="w-12 h-12 object-contain border rounded ml-3" />
-                            )}
+                        )}
+                        {viewingCourse.logoImage && (
+                          <div>
+                            <p className="fw-semibold text-muted mb-2">Logo Image:</p>
+                            <img src={viewingCourse.logoImage} alt="Course Logo" className="img-thumbnail" style={{ width: '128px', height: '128px' }} />
                           </div>
-                        ))
-                      ) : (
-                        <p className="text-gray-500 italic">No features available</p>
-                      )}
+                        )}
+                      </div>
                     </div>
+
+                    {viewingCourse.pdf && (
+                      <div className="card bg-secondary bg-opacity-10 border-secondary mb-4">
+                        <div className="card-header bg-secondary text-white">
+                          <h6 className="mb-0">Course Materials</h6>
+                        </div>
+                        <div className="card-body">
+                          <button
+                            onClick={() => handleDownload(viewingCourse.pdf, viewingCourse.name)}
+                            className="btn btn-primary"
+                          >
+                            <i className="bi bi-download me-2"></i>
+                            Download Course PDF
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="bg-gradient-to-r from-red-50 to-red-100 rounded-lg p-6 border-l-4 border-red-400">
-                    <h3 className="text-xl font-bold mb-4 text-red-800">Reviews</h3>
-                    <div className="space-y-4 max-h-64 overflow-y-auto">
-                      {viewingCourse.reviews && viewingCourse.reviews.length > 0 ? (
-                        viewingCourse.reviews.map((review, index) => (
-                          <div key={index} className="bg-white p-4 rounded-lg border">
-                            <div className="flex items-center mb-2">
-                              {review.image && (
-                                <img src={review.image} alt={review.name} className="w-10 h-10 rounded-full mr-3 object-cover border" />
-                              )}
-                              <div className="flex-1">
-                                <p className="font-semibold text-gray-800">{review.name}</p>
-                                <div className="flex items-center">
-                                  <div className="flex text-yellow-400">
-                                    {[...Array(5)].map((_, i) => (
-                                      <svg key={i} className={`w-4 h-4 ${i < parseInt(review.rating) ? 'fill-current' : 'text-gray-300'}`} viewBox="0 0 20 20">
-                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                      </svg>
-                                    ))}
-                                  </div>
-                                  <span className="ml-2 text-sm text-gray-600">({review.rating}/5)</span>
-                                </div>
+                  <div className="col-md-6">
+                    <div className="card bg-info bg-opacity-10 border-info mb-4">
+                      <div className="card-header bg-info text-white">
+                        <h6 className="mb-0">FAQs</h6>
+                      </div>
+                      <div className="card-body" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                        {viewingCourse.faq && viewingCourse.faq.length > 0 ? (
+                          viewingCourse.faq.map((faq, index) => (
+                            <div key={index} className="card mb-3">
+                              <div className="card-body">
+                                <h6 className="card-title fw-semibold">{faq.question}</h6>
+                                <p className="card-text text-muted">{faq.answer}</p>
                               </div>
                             </div>
-                            <p className="text-gray-600 text-sm">{review.content}</p>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-gray-500 italic">No reviews available</p>
-                      )}
+                          ))
+                        ) : (
+                          <p className="text-muted fst-italic">No FAQs available</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 rounded-lg p-6 border-l-4 border-indigo-400">
-                    <h3 className="text-xl font-bold mb-4 text-indigo-800">Tools & Technologies</h3>
-                    <div className="grid grid-cols-6 gap-3">
-                      {viewingCourse.toolsImages && viewingCourse.toolsImages.length > 0 ? (
-                        viewingCourse.toolsImages.map((tool, index) => (
-                          <div key={index} className="bg-white p-2 rounded-lg border shadow-sm">
-                            <img src={tool} alt={`Tool ${index + 1}`} className="w-full h-12 object-contain" />
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-gray-500 italic col-span-6">No tools images available</p>
-                      )}
+                    <div className="card bg-warning bg-opacity-10 border-warning mb-4">
+                      <div className="card-header bg-warning text-dark">
+                        <h6 className="mb-0">Features</h6>
+                      </div>
+                      <div className="card-body" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                        {viewingCourse.features && viewingCourse.features.length > 0 ? (
+                          viewingCourse.features.map((feature, index) => (
+                            <div key={index} className="card mb-3">
+                              <div className="card-body d-flex align-items-center">
+                                <div className="flex-grow-1">
+                                  <p className="card-text fw-medium">{feature.title}</p>
+                                </div>
+                                {feature.image && (
+                                  <img src={feature.image} alt={feature.title} className="img-thumbnail ms-3" style={{ width: '48px', height: '48px' }} />
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-muted fst-italic">No features available</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="card bg-danger bg-opacity-10 border-danger mb-4">
+                      <div className="card-header bg-danger text-white">
+                        <h6 className="mb-0">Reviews</h6>
+                      </div>
+                      <div className="card-body" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                        {viewingCourse.reviews && viewingCourse.reviews.length > 0 ? (
+                          viewingCourse.reviews.map((review, index) => (
+                            <div key={index} className="card mb-3">
+                              <div className="card-body">
+                                <div className="d-flex align-items-center mb-2">
+                                  {review.image && (
+                                    <img src={review.image} alt={review.name} className="rounded-circle me-3" style={{ width: '40px', height: '40px' }} />
+                                  )}
+                                  <div className="flex-grow-1">
+                                    <h6 className="card-title mb-0">{review.name}</h6>
+                                    <div className="d-flex align-items-center">
+                                      <div className="text-warning">
+                                        {[...Array(5)].map((_, i) => (
+                                          <i
+                                            key={i}
+                                            className={`bi bi-star${i < parseInt(review.rating) ? '-fill' : ''}`}
+                                          ></i>
+                                        ))}
+                                      </div>
+                                      <span className="text-muted small ms-2">({review.rating}/5)</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <p className="card-text text-muted">{review.content}</p>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-muted fst-italic">No reviews available</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="card bg-purple bg-opacity-10 border-purple">
+                      <div className="card-header bg-purple text-white">
+                        <h6 className="mb-0">Tools & Technologies</h6>
+                      </div>
+                      <div className="card-body">
+                        <div className="row">
+                          {viewingCourse.toolsImages && viewingCourse.toolsImages.length > 0 ? (
+                            viewingCourse.toolsImages.map((tool, index) => (
+                              <div key={index} className="col-2 mb-3">
+                                <div className="card">
+                                  <img src={tool} alt={`Tool ${index + 1}`} className="card-img-top p-2" style={{ height: '60px', objectFit: 'contain' }} />
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-muted fst-italic">No tools images available</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-
-              <div className="flex justify-end mt-8 pt-6 border-t border-gray-200">
+              <div className="modal-footer">
                 <button
+                  type="button"
+                  className="btn btn-secondary"
                   onClick={() => setShowViewModal(false)}
-                  className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-200 font-medium"
                 >
                   Close
                 </button>

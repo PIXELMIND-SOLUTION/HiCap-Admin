@@ -19,6 +19,7 @@ import Details from './components/details';
 import SocialMedia  from './pages/SocialMedia';
 import Features from './HomePage/Features';
 import EnrollmentAndCertificate from './components/Enrollment&Certificate';
+import CourseModule from './courseModule/CourseModule';
 
 function App() {
   return (
@@ -47,6 +48,8 @@ function App() {
           <Route path="/admin/social-media" element={<SocialMedia />} />
           <Route path="/admin/features" element={<Features/>}/>
           <Route path="/admin/enrollandcertificate" element={<EnrollmentAndCertificate />}/>
+          <Route path="/admin/module" element={<CourseModule />}/>
+          
           {/* Other routes... */}
         </Route>
 
